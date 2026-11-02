@@ -1,0 +1,17 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Rhistory$
+^\.vscode$
+^updated_files20260929$
+^dev$
+^air\.toml$
+^jarl\.toml$
+^cran-comments\.md$
+^LICENSE\.md$
+^showcase\.R$
+^figure$
+^\.cursor$
+^\.github$
+^refactored$
+^CODEOWNERS
+^CONTRIBUTING.md

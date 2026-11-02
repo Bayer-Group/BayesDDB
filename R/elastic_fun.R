@@ -1,0 +1,117 @@
+#' Arctangent Elastic Function
+#'
+#' Maps the posterior predictive probability (PPP) to the interval [0, 1].
+#' This function is used for outcome adjustment in the double-adjustment
+#' approach.
+#'
+#' @param x Numeric vector of posterior predictive probabilities (values
+#'        between 0 and 1). NAs are not allowed.
+#' @param map_a Numeric scalar. Tuning shape parameter for the arctangent
+#'        elastic function (finite, > 0). It controls the squareness of the curve and
+#'        therefore how leniently the method treats outcome differences: larger
+#'        values make the function more tolerant (less discounting for a given
+#'        PPP), smaller values make it stricter.
+#' @param map_b Numeric scalar. Tuning power parameter (finite, > 0). It controls the
+#'        sharpness of the peak at PPP = 0.5 and the steepness of the
+#'        shoulders. \code{map_b = 1} gives the original one-parameter elastic
+#'        function.
+#'
+#' @return Numeric vector of transformed probabilities, same length as \code{x}.
+#'
+#' @details
+#' The two-parameter elastic function is defined as:
+#' \deqn{g(PPP) = \frac{\arctan(a \cdot \sin(\pi \cdot PPP))^b}{\arctan(a)^b}}{g(PPP) = atan(a * sin(pi * PPP))^b / atan(a)^b}
+#' with \eqn{a} = \code{map_a} and \eqn{b} = \code{map_b}.
+#'
+#' This transformation has the following properties:
+#' \itemize{
+#'   \item When PPP = 0.5, g(PPP) = 1 (no discounting - outcomes are compatible)
+#'   \item When PPP approaches 0 or 1, g(PPP) approaches 0 (maximum discounting)
+#'   \item The function is symmetric around PPP = 0.5
+#'   \item Parameter \code{map_a} controls the squareness of the curve. Larger
+#'         \code{map_a} makes the method more lenient towards outcome
+#'         differences (g stays closer to 1 as PPP moves away from 0.5);
+#'         smaller \code{map_a} makes it stricter. As a guide:
+#'         \code{0 < map_a <= 1} is strict (conservative about outcome
+#'         differences), \code{1 < map_a <= 5} is mild,
+#'         \code{5 < map_a <= 10} is increasingly lenient, and
+#'         \code{map_a > 10} is lenient (outcome differences are barely
+#'         penalized)
+#'   \item Parameter \code{map_b} controls the sharpness of the peak and the
+#'         steepness of the shoulders; larger \code{map_b} discounts more
+#'         sharply as PPP moves away from 0.5
+#'   \item With \code{map_b = 1} the function reduces to the original
+#'         one-parameter form
+#' }
+#'
+#' @examples
+#' # Example with different PPP values
+#' ppp_values <- c(0.1, 0.3, 0.5, 0.7, 0.9)
+#' elastic_fun(ppp_values, map_a = 1, map_b = 1)
+#' elastic_fun(ppp_values, map_a = 5, map_b = 1)
+#'
+#' # The power parameter sharpens the peak
+#' elastic_fun(ppp_values, map_a = 1, map_b = 3)
+#'
+#' # Values of map_a below 1 are allowed and give a stricter function
+#' elastic_fun(ppp_values, map_a = 0.5, map_b = 1)
+#'
+#' # Plot the elastic function for different tuning parameters
+#' # (larger map_a = more lenient towards outcome differences)
+#' x <- seq(0, 1, by = 0.01)
+#' plot(x, elastic_fun(x, map_a = 0.5, map_b = 1), type = "l",
+#'      xlab = "PPP", ylab = "g(PPP)", main = "Elastic Function")
+#' lines(x, elastic_fun(x, map_a = 1, map_b = 1), col = "red")
+#' lines(x, elastic_fun(x, map_a = 10, map_b = 1), col = "blue")
+#' legend("bottomright",
+#'        legend = c("map_a=0.5 (strict)", "map_a=1", "map_a=10 (lenient)"),
+#'        col = c("black", "red", "blue"), lty = 1)
+#'
+#' # Effect of the power parameter map_b for fixed map_a
+#' plot(x, elastic_fun(x, map_a = 1, map_b = 1), type = "l", lwd = 2,
+#'      xlab = "PPP", ylab = "g(PPP)", main = "Elastic Function (map_a = 1)")
+#' lines(x, elastic_fun(x, map_a = 1, map_b = 3), lty = 2, lwd = 2)
+#' legend("bottom", legend = c("map_b = 1", "map_b = 3"), lty = c(1, 2), lwd = 2)
+#'
+#' @export
+elastic_fun <- function(x, map_a, map_b) {
+  # elastic_fun() maps the posterior predictive probability (PPP)
+  # to the (0,1) interval
+  #
+  # INPUT
+  # x : posterior predictive probability (PPP)
+  # map_a : tuning shape parameter - controls the squareness of the curve
+  # map_b : tuning power parameter - controls the sharpness of the peak
+  #          and the steepness of the "shoulders"
+  # OUTPUT
+  # transformed value
+  ###############################
+  # Input checks
+  if (anyNA(x)) {
+    stop(
+      "Input PPP values must be numeric in the interval [0,1] - NAs are not allowed"
+    )
+  }
+  if (!is.numeric(x)) {
+    stop("Input PPP values must be numeric in the interval [0,1]")
+  }
+  if (any(x < 0 | x > 1)) {
+    stop("The posterior predictive probability is out of the interval [0, 1]")
+  }
+  if (
+    !is.numeric(map_a) || length(map_a) != 1 || !is.finite(map_a) || map_a <= 0
+  ) {
+    stop(
+      "Tuning shape parameter map_a must be positive (a single finite number > 0)"
+    )
+  }
+  if (
+    !is.numeric(map_b) || length(map_b) != 1 || !is.finite(map_b) || map_b <= 0
+  ) {
+    stop(
+      "Tuning power parameter map_b must be positive (a single finite number > 0)"
+    )
+  }
+  # function
+  atan(map_a * sin(x * pi))^map_b / atan(map_a)^map_b
+}
