@@ -9,7 +9,7 @@ Bayesian Dynamic Borrowing with Double Adjustment for augmenting clinical trial 
 install.packages("BayesDDB")
 
 # Development version from GitHub
-pak::pak("bayer-group/BayesDDB")
+pak::pkg_install("bayer-group/BayesDDB")
 ```
 
 ## Usage
